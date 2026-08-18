@@ -1,3 +1,7 @@
+/* ---------------- Everything runs after DOM is fully ready (avoids
+   "buttons not clickable" issues caused by script timing on some hosts) ---------------- */
+document.addEventListener('DOMContentLoaded', function(){
+
 /* ---------------- Navigation ---------------- */
 const roleAccess = {
   admin:   { label:"Owner / Admin", hide:[] },
@@ -12,10 +16,26 @@ function go(id){
   document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
   const nav = document.querySelector('.navitem[data-page="'+id+'"]');
   if(nav) nav.classList.add('active');
-  if(window.innerWidth<=900) document.getElementById('sidebar').classList.remove('open');
+  closeSidebar();
   window.scrollTo(0,0);
 }
 function toggleGroup(el){ el.classList.toggle('open'); el.nextElementSibling.classList.toggle('open'); }
+
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarBackdrop').classList.add('show');
+}
+function closeSidebar(){
+  if(window.innerWidth<=900){
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarBackdrop').classList.remove('show');
+  }
+}
+document.getElementById('hamburgerBtn').addEventListener('click', function(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('show');
+});
+document.getElementById('sidebarBackdrop').addEventListener('click', closeSidebar);
 
 function setRole(r){
   const cfg = roleAccess[r];
@@ -88,46 +108,66 @@ const timeline = [
 document.getElementById('timelineBody').innerHTML = timeline.map(t=>`
   <div class="timeline-item"><div class="t-dot"></div><div class="t-body"><div class="t-msg">${t.msg}</div><div class="t-meta">${t.meta}</div></div></div>`).join('');
 
-/* ---------------- Charts ---------------- */
+/* ---------------- Charts (wrapped in try/catch so a Chart.js
+   load failure never breaks navigation/buttons on the rest of the page) ---------------- */
 const chartFont = {family:"Inter"};
-new Chart(document.getElementById('revChart'), {
-  type:'line',
-  data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-    datasets:[
-      {label:'Revenue (₹00)',data:[320,410,380,460,510,600,540],borderColor:'#00D9C0',backgroundColor:'rgba(0,217,192,.12)',tension:.4,fill:true},
-      {label:'Data (GB)',data:[210,260,240,300,330,410,360],borderColor:'#8B7CF6',backgroundColor:'rgba(139,124,246,.08)',tension:.4,fill:true}
-    ]},
-  options:{plugins:{legend:{labels:{font:chartFont}}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
-});
-new Chart(document.getElementById('planChart'), {
-  type:'doughnut',
-  data:{labels:['100 Mbps','60 Mbps','50 Mbps','40 Mbps','20 Mbps'],
-    datasets:[{data:[420,280,190,310,137],backgroundColor:['#00D9C0','#8B7CF6','#FFB648','#FF6B6B','#3395FF']}]},
-  options:{plugins:{legend:{position:'bottom',labels:{font:chartFont,boxWidth:10}}}}
-});
-new Chart(document.getElementById('payChart'), {
-  type:'bar',
-  data:{labels:['12','13','14','15','16','17','18'],
-    datasets:[{label:'Payments (₹000)',data:[12,18,9,22,30,26,38],backgroundColor:'#00D9C0',borderRadius:6}]},
-  options:{plugins:{legend:{display:false}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
-});
-
+let usageChart = null;
 const usageData = {
   daily:{labels:['12AM','4AM','8AM','12PM','4PM','8PM'],data:[20,10,45,80,95,60]},
   weekly:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],data:[210,260,240,300,330,410,360]},
   monthly:{labels:['Wk1','Wk2','Wk3','Wk4'],data:[1200,1450,1600,1380]},
 };
-let usageChart = new Chart(document.getElementById('usageChart'), {
-  type:'line',
-  data:{labels:usageData.daily.labels, datasets:[{label:'Data Usage (GB)',data:usageData.daily.data,borderColor:'#FFB648',backgroundColor:'rgba(255,182,72,.12)',tension:.4,fill:true}]},
-  options:{plugins:{legend:{labels:{font:chartFont}}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
-});
+
+try{
+  if(typeof Chart === 'undefined') throw new Error('Chart.js CDN load nahi hui — internet/CDN block check karo');
+
+  new Chart(document.getElementById('revChart'), {
+    type:'line',
+    data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets:[
+        {label:'Revenue (₹00)',data:[320,410,380,460,510,600,540],borderColor:'#00D9C0',backgroundColor:'rgba(0,217,192,.12)',tension:.4,fill:true},
+        {label:'Data (GB)',data:[210,260,240,300,330,410,360],borderColor:'#8B7CF6',backgroundColor:'rgba(139,124,246,.08)',tension:.4,fill:true}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:chartFont}}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
+  });
+  new Chart(document.getElementById('planChart'), {
+    type:'doughnut',
+    data:{labels:['100 Mbps','60 Mbps','50 Mbps','40 Mbps','20 Mbps'],
+      datasets:[{data:[420,280,190,310,137],backgroundColor:['#00D9C0','#8B7CF6','#FFB648','#FF6B6B','#3395FF']}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:chartFont,boxWidth:10}}}}
+  });
+  new Chart(document.getElementById('payChart'), {
+    type:'bar',
+    data:{labels:['12','13','14','15','16','17','18'],
+      datasets:[{label:'Payments (₹000)',data:[12,18,9,22,30,26,38],backgroundColor:'#00D9C0',borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
+  });
+  usageChart = new Chart(document.getElementById('usageChart'), {
+    type:'line',
+    data:{labels:usageData.daily.labels, datasets:[{label:'Data Usage (GB)',data:usageData.daily.data,borderColor:'#FFB648',backgroundColor:'rgba(255,182,72,.12)',tension:.4,fill:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:chartFont}}},scales:{x:{ticks:{font:chartFont}},y:{ticks:{font:chartFont}}}}
+  });
+}catch(err){
+  console.error('Chart render failed (rest of the app still works):', err);
+}
+
 function setUsageRange(el,range){
   document.querySelectorAll('#page-usage .pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
+  if(!usageChart) return;
   usageChart.data.labels = usageData[range].labels;
   usageChart.data.datasets[0].data = usageData[range].data;
   usageChart.update();
 }
+window.setUsageRange = setUsageRange;
+window.go = go;
+window.toggleGroup = toggleGroup;
+window.setRole = setRole;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.manageSub = manageSub;
+window.toast = toast;
 
 setRole('admin');
+
+}); // end DOMContentLoaded

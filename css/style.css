@@ -148,6 +148,8 @@ button{font-family:inherit;cursor:pointer;}
 .panel-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .panel-head h3{margin:0;font-size:15px;}
 .panel-body{padding:18px;}
+.panel-body canvas{max-width:100%;height:220px!important;width:100%!important;}
+@media(max-width:480px){.panel-body canvas{height:180px!important;}}
 .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;}
 .tag-green{background:#E4F8EF;color:#1B8A57;}
 .tag-red{background:#FDECEC;color:#D9463F;}
@@ -230,10 +232,43 @@ input:focus,select:focus,textarea:focus{outline:2px solid rgba(0,217,192,.35);bo
 .plan-card .p-top{display:flex;justify-content:space-between;font-weight:700;font-size:13px;}
 .plan-card .p-speed{font-size:11px;color:var(--muted);margin-top:2px;}
 
+/* ---- Sidebar backdrop (mobile) ---- */
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(10,15,29,.5);z-index:35;}
+.sidebar-backdrop.show{display:block;}
+
 @media(max-width:900px){
   .hamburger{display:block;}
-  .sidebar{position:fixed;left:0;transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.4);}
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.4);width:270px;max-width:82vw;}
   .sidebar.open{transform:translateX(0);}
   .content{padding:14px;}
   .two-col{grid-template-columns:1fr;}
+  .topbar{padding:0 12px;gap:10px;}
+  .searchbox{min-width:0;}
+  .searchbox input{min-width:0;}
+}
+
+@media(max-width:640px){
+  .content{padding:12px;}
+  .page-head{align-items:flex-start;}
+  .page-head h1{font-size:18px;}
+  .panel-body{padding:14px;}
+  .panel-head{padding:14px;}
+  .stat{padding:14px;min-height:80px;}
+  .stat .val{font-size:22px;}
+  .modal-body,.modal-foot,.modal-head{padding-left:16px;padding-right:16px;}
+  .grid-2{gap:10px;}
+}
+
+@media(max-width:480px){
+  .topbar{height:58px;}
+  .searchbox{display:none;}
+  .top-right{gap:8px;margin-left:0;flex:1;justify-content:flex-end;}
+  .user-chip .u-meta{display:none;}
+  .icon-btn{width:34px;height:34px;}
+  .brand-text .sub{display:none;}
+  table{font-size:12px;}
+  thead th,tbody td{padding:8px 9px;}
+  .btn{padding:8px 12px;font-size:12.5px;}
+  .portal-phone{width:100%;max-width:280px;}
+  .content{padding:10px;}
 }

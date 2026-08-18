@@ -13,6 +13,7 @@
 <div id="app">
 
   <!-- ============ SIDEBAR ============ -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <div class="brand-mark">NP</div>
@@ -84,7 +85,7 @@
   <!-- ============ MAIN ============ -->
   <div class="main">
     <div class="topbar">
-      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Menu toggle karo">☰</button>
       <div class="searchbox">🔍 <input placeholder="Subscriber, invoice, ID dhundo…"></div>
       <div class="top-right">
         <div class="icon-btn">🔔<span class="dot"></span></div>
