@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetPulse CRM — WiFi/ISP Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark">NP</div>
+      <div class="brand-text">
+        <div class="name">NetPulse CRM</div>
+        <div class="sub">WiFi / ISP Suite</div>
+      </div>
+    </div>
+
+    <div class="role-pill">
+      <span>👤 Logged in as</span>
+      <select id="roleSwitch" onchange="setRole(this.value)">
+        <option value="admin">Owner / Admin</option>
+        <option value="staff">Staff (Limited)</option>
+        <option value="support">Support Agent</option>
+      </select>
+    </div>
+
+    <div class="navgroup-label">Admin Navigation</div>
+    <div class="navitem active" data-page="dashboard" onclick="go('dashboard')"><span class="ic">🏠</span>Dashboard</div>
+    <div class="navitem" data-page="sites" onclick="go('sites')"><span class="ic">📍</span>Sites</div>
+
+    <div class="navparent" onclick="toggleGroup(this)"><span style="display:flex;gap:11px;align-items:center;"><span class="ic">📶</span>Networking</span><span class="chev">▸</span></div>
+    <div class="navchildren">
+      <div class="navchild" onclick="go('nas')">NAS</div>
+      <div class="navchild" onclick="go('ipv4')">IPv4 Pool</div>
+      <div class="navchild" onclick="go('ipv6')">IPv6 Pool</div>
+    </div>
+
+    <div class="navitem" data-page="packages" onclick="go('packages')"><span class="ic">🏷️</span>Packages</div>
+    <div class="navitem" data-page="subscribers" onclick="go('subscribers')"><span class="ic">👥</span>Subscribers</div>
+
+    <div class="navparent" onclick="toggleGroup(this)"><span style="display:flex;gap:11px;align-items:center;"><span class="ic">💰</span>Finance</span><span class="chev">▸</span></div>
+    <div class="navchildren">
+      <div class="navchild" onclick="go('finance')">Dashboard</div>
+      <div class="navchild" onclick="go('invoice')">Invoice</div>
+      <div class="navchild" onclick="go('payments')">Payments</div>
+      <div class="navchild" onclick="go('gateway')">Payment Gateway</div>
+    </div>
+
+    <div class="navparent" onclick="toggleGroup(this)"><span style="display:flex;gap:11px;align-items:center;"><span class="ic">📄</span>CRM</span><span class="chev">▸</span></div>
+    <div class="navchildren">
+      <div class="navchild" onclick="go('crmdash')">Dashboard</div>
+      <div class="navchild" onclick="go('quotation')">Quotation</div>
+      <div class="navchild" onclick="go('leads')">Leads</div>
+    </div>
+
+    <div class="navitem" data-page="tickets" onclick="go('tickets')"><span class="ic">🎫</span>Tickets</div>
+
+    <div class="navparent" onclick="toggleGroup(this)"><span style="display:flex;gap:11px;align-items:center;"><span class="ic">📡</span>Monitoring</span><span class="chev">▸</span></div>
+    <div class="navchildren">
+      <div class="navchild" onclick="go('olts')">OLTs</div>
+      <div class="navchild" onclick="go('onus')">ONUs</div>
+    </div>
+
+    <div class="navparent" onclick="toggleGroup(this)"><span style="display:flex;gap:11px;align-items:center;"><span class="ic">📊</span>Reports</span><span class="chev">▸</span></div>
+    <div class="navchildren">
+      <div class="navchild" onclick="go('usage')">Data Usage (D/W/M)</div>
+      <div class="navchild" onclick="go('activitylog')">Client Activity Log</div>
+      <div class="navchild" onclick="go('renewals')">Upcoming Renewals</div>
+    </div>
+
+    <div class="navgroup-label">Config Navigation</div>
+    <div class="navitem" data-page="apiconfig" onclick="go('apiconfig')"><span class="ic">🔌</span>API Integrations</div>
+    <div class="navitem" id="rolesNav" data-page="roles" onclick="go('roles')"><span class="ic">🛡️</span>Roles & Employees</div>
+    <div class="navitem" data-page="portal" onclick="go('portal')"><span class="ic">📱</span>Client Self-Service</div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="searchbox">🔍 <input placeholder="Subscriber, invoice, ID dhundo…"></div>
+      <div class="top-right">
+        <div class="icon-btn">🔔<span class="dot"></span></div>
+        <div class="icon-btn">💬</div>
+        <div class="user-chip">
+          <div class="avatar">IT</div>
+          <div class="u-meta"><div class="n">ITS-Gangtok Admin</div><div class="r" id="roleLabel">Owner / Admin</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div><h1>Dashboard</h1><div class="crumb">Live overview • aaj: 18 Aug 2026</div></div>
+          <button class="btn btn-primary" onclick="openModal('addSub')">+ New Subscriber</button>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom:14px;">
+          <div class="stat s-cyan"><div class="lbl">Total Subscribers</div><div class="val">1,337</div><div class="sub">+18 is week</div></div>
+          <div class="stat s-green"><div class="lbl">Active</div><div class="val">551</div><div class="sub">531 online abhi</div></div>
+          <div class="stat s-coral"><div class="lbl">Expired</div><div class="val">780</div><div class="sub">18 kal expire honge</div></div>
+          <div class="stat s-amber"><div class="lbl">Pending Recharge</div><div class="val">14</div><div class="sub">payment gateway se</div></div>
+        </div>
+
+        <div class="two-col" style="margin-bottom:14px;">
+          <div class="panel">
+            <div class="panel-head"><h3>Revenue &amp; Usage — pichhle 7 din</h3>
+              <div class="pill-row"><span class="pill active">Daily</span><span class="pill">Weekly</span><span class="pill">Monthly</span></div>
+            </div>
+            <div class="panel-body"><canvas id="revChart" height="130"></canvas></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Plan Distribution</h3></div>
+            <div class="panel-body"><canvas id="planChart" height="180"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Audit Timeline — client activity log</h3><button class="btn btn-sm">Export</button></div>
+          <div class="panel-body" id="timelineBody"></div>
+        </div>
+      </div>
+
+      <!-- ===================== SITES ===================== -->
+      <div class="page" id="page-sites">
+        <div class="page-head"><div><h1>Sites</h1><div class="crumb">Dashboard / Sites</div></div><button class="btn btn-primary">+ Add Site</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>ID</th><th>Name</th><th>Company</th><th>Domain</th><th>Type</th><th>Online Subs</th><th>Balance</th><th>State</th></tr></thead>
+          <tbody>
+            <tr><td>778</td><td class="cell-strong">Default-Site</td><td>Invention Technical Services</td><td class="link">crm.inventiontechnical.in</td><td><span class="tag tag-blue">Non-Reseller</span></td><td>375</td><td><span class="tag tag-green">Unlimited</span></td><td>Sikkim</td></tr>
+            <tr><td>779</td><td class="cell-strong">Benhur Thapa</td><td>ITS Fibernet</td><td class="link">crm.inventiontechnical.in</td><td><span class="tag tag-violet">Reseller</span></td><td>9</td><td>₹600.00</td><td>Sikkim</td></tr>
+            <tr><td>1345</td><td class="cell-strong">itsgangtok</td><td>Invention Technical Services</td><td class="link">itsgangtok.janitornetwork.com</td><td><span class="tag tag-violet">Reseller</span></td><td>148</td><td>₹17,448.00</td><td>Sikkim</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <!-- ===================== PACKAGES ===================== -->
+      <div class="page" id="page-packages">
+        <div class="page-head"><div><h1>Packages</h1><div class="crumb">Speed, data limit &amp; offers backend se set karo</div></div><button class="btn btn-primary" onclick="openModal('addPkg')">+ Add Package</button></div>
+        <div class="panel">
+          <div class="panel-head"><h3>Shared Packages</h3><div class="pill-row"><span class="pill active">All</span><span class="pill">Enabled</span><span class="pill">Disabled</span></div></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Name</th><th>Down Speed</th><th>Data Limit</th><th>Validity</th><th>Price</th><th>Offer</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="pkgTable"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ===================== SUBSCRIBERS ===================== -->
+      <div class="page" id="page-subscribers">
+        <div class="page-head">
+          <div><h1>Subscribers</h1><div class="crumb">Plan renew • upgrade/downgrade • speed • offers • block-unblock</div></div>
+          <button class="btn btn-primary" onclick="openModal('addSub')">+ Add Subscriber</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="pill-row"><span class="pill active">All (1337)</span><span class="pill">Online (531)</span><span class="pill">Expired (780)</span><span class="pill">Unverified</span></div>
+            <div style="display:flex;gap:8px;"><button class="btn btn-sm">⬇ Export</button><button class="btn btn-sm">Filter</button></div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th></th><th>Status</th><th>Username</th><th>Package</th><th>Speed</th><th>Expiry</th><th>Data Used (This Mo.)</th><th>Actions</th></tr></thead>
+            <tbody id="subTable"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ===================== FINANCE ===================== -->
+      <div class="page" id="page-finance">
+        <div class="page-head"><div><h1>Finance Dashboard</h1><div class="crumb">Invoices, proforma, payments</div></div></div>
+        <div class="grid grid-4" style="margin-bottom:14px;">
+          <div class="stat s-coral"><div class="lbl">Unpaid Invoices</div><div class="val">₹28,400</div></div>
+          <div class="stat s-navy"><div class="lbl">Open Proforma</div><div class="val">₹6,200</div></div>
+          <div class="stat s-violet"><div class="lbl">Today Invoices</div><div class="val">₹41,900</div></div>
+          <div class="stat s-green"><div class="lbl">Today Payments</div><div class="val">₹38,120</div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><h3>Daily Payments — August 2026</h3></div>
+          <div class="panel-body"><canvas id="payChart" height="110"></canvas></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-invoice">
+        <div class="page-head"><div><h1>Invoices</h1><div class="crumb">Finance / Invoice</div></div><button class="btn btn-primary">+ Create Invoice</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Invoice No.</th><th>Subscriber</th><th>Package</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">ITS/GTK/2026/1489</td><td>roman@its</td><td>itsgangtok@944</td><td>₹944.00</td><td><span class="tag tag-green">Paid</span></td><td>18 Aug 2026</td></tr>
+            <tr><td class="mono">ITS/GTK/2026/1488</td><td>shekhar@its</td><td>upto_100Mbps_1Month</td><td>₹1,000.00</td><td><span class="tag tag-amber">Pending</span></td><td>18 Aug 2026</td></tr>
+            <tr><td class="mono">ITS/GTK/2026/1487</td><td>watercommission</td><td>upto_150Mbps_5TB</td><td>₹2,150.00</td><td><span class="tag tag-red">Overdue</span></td><td>17 Aug 2026</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <div class="page" id="page-payments">
+        <div class="page-head"><div><h1>Payments</h1><div class="crumb">Auto-captured via Payment Gateway</div></div></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Txn ID</th><th>Subscriber</th><th>Gateway</th><th>Amount</th><th>Status</th><th>Auto Action</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">TXN9204471</td><td>bidhya@its</td><td>Razorpay</td><td>₹2,799.00</td><td><span class="tag tag-green">Success</span></td><td>Service auto-resumed ✅</td></tr>
+            <tr><td class="mono">TXN9204465</td><td>cs_suman</td><td>PhonePe</td><td>₹944.00</td><td><span class="tag tag-green">Success</span></td><td>Renewed, plan active</td></tr>
+            <tr><td class="mono">TXN9204451</td><td>lyric231</td><td>Razorpay</td><td>₹1,000.00</td><td><span class="tag tag-red">Failed</span></td><td>Service stays stopped</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <!-- ===================== PAYMENT GATEWAY / API CONFIG ===================== -->
+      <div class="page" id="page-gateway">
+        <div class="page-head"><div><h1>Payment Gateway</h1><div class="crumb">API keys yahan paste karo — auto-stop / auto-resume isi se chalega</div></div></div>
+        <div class="grid grid-2">
+          <div class="api-card">
+            <div class="h"><div class="ic" style="background:#3395FF;">₹</div><div class="name">Razorpay</div><span class="status tag-gray" style="margin-left:auto;">Not Connected</span></div>
+            <div class="field"><label>Key ID</label><input type="text" placeholder="rzp_live_xxxxxxxxxxxx"></div>
+            <div class="field"><label>Key Secret</label><input type="password" placeholder="●●●●●●●●●●●●"></div>
+            <div class="field"><label>Webhook URL (auto-resume ke liye)</label><input type="text" value="https://yourcrm.in/api/webhook/razorpay" readonly></div>
+            <button class="btn btn-cyan btn-sm">Save &amp; Test Connection</button>
+          </div>
+          <div class="api-card">
+            <div class="h"><div class="ic" style="background:#5F259F;">P</div><div class="name">PhonePe / UPI</div><span class="status tag-gray" style="margin-left:auto;">Not Connected</span></div>
+            <div class="field"><label>Merchant ID</label><input type="text" placeholder="MERCHANTUAT"></div>
+            <div class="field"><label>Salt Key</label><input type="password" placeholder="●●●●●●●●●●●●"></div>
+            <div class="field"><label>Salt Index</label><input type="text" placeholder="1"></div>
+            <button class="btn btn-cyan btn-sm">Save &amp; Test Connection</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-head"><h3>Auto Service Control Rule</h3></div>
+          <div class="panel-body">
+            <div class="checkitem"><div class="toggle on"></div> Plan expire hote hi subscriber ki service turant auto-stop ho jaye</div>
+            <div class="checkitem"><div class="toggle on"></div> Payment success webhook aate hi service auto-start / auto-resume ho jaye</div>
+            <div class="checkitem"><div class="toggle"></div> Grace period do (expire ke 24 ghante baad tak stop na ho)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== CRM ===================== -->
+      <div class="page" id="page-crmdash">
+        <div class="page-head"><div><h1>CRM Dashboard</h1><div class="crumb">Leads &amp; quotations ka overview</div></div></div>
+        <div class="grid grid-3">
+          <div class="stat s-navy"><div class="lbl">Open Leads</div><div class="val">42</div></div>
+          <div class="stat s-cyan"><div class="lbl">Quotations Sent</div><div class="val">17</div></div>
+          <div class="stat s-green"><div class="lbl">Converted</div><div class="val">9</div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-quotation">
+        <div class="page-head"><div><h1>Quotation</h1><div class="crumb">Kisi bhi client ko sidha yahi se plan quotation bhejo</div></div><button class="btn btn-primary" onclick="openModal('quote')">+ New Quotation</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Quote No.</th><th>Client</th><th>Plan</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">QT-2026-104</td><td>Pemba Sherpa</td><td>100 Mbps / 1 Month</td><td>₹944</td><td><span class="tag tag-amber">Sent</span></td></tr>
+            <tr><td class="mono">QT-2026-103</td><td>Sonam Wangchuk</td><td>60 Mbps / 1 Month</td><td>₹1,180</td><td><span class="tag tag-green">Accepted</span></td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <div class="page" id="page-leads">
+        <div class="page-head"><div><h1>Leads</h1><div class="crumb">CRM / Leads</div></div><button class="btn btn-primary">+ Add Lead</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Area</th><th>Interested Plan</th><th>Stage</th></tr></thead>
+          <tbody>
+            <tr><td>Tashi Bhutia</td><td>98xxxxx210</td><td>Gangtok Bazar</td><td>100 Mbps</td><td><span class="tag tag-blue">Follow-up</span></td></tr>
+            <tr><td>Dorjee Lepcha</td><td>97xxxxx884</td><td>Tadong</td><td>60 Mbps</td><td><span class="tag tag-amber">New</span></td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <!-- ===================== TICKETS ===================== -->
+      <div class="page" id="page-tickets">
+        <div class="page-head"><div><h1>Tickets</h1><div class="crumb">Support / Complaints</div></div><button class="btn btn-primary">+ New Ticket</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Ticket #</th><th>Subscriber</th><th>Issue</th><th>Priority</th><th>Status</th><th>Assigned</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">TCK-1042</td><td>rajesh@its</td><td>Slow speed complaint</td><td><span class="tag tag-amber">Medium</span></td><td><span class="tag tag-blue">Open</span></td><td>Pritam</td></tr>
+            <tr><td class="mono">TCK-1041</td><td>ambikasubba@its</td><td>No internet</td><td><span class="tag tag-red">High</span></td><td><span class="tag tag-green">Resolved</span></td><td>Pranit</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <!-- ===================== MONITORING ===================== -->
+      <div class="page" id="page-olts">
+        <div class="page-head"><div><h1>OLTs</h1><div class="crumb">Monitoring / OLTs</div></div></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>OLT Name</th><th>IP</th><th>PON Ports</th><th>ONUs Connected</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>OLT-Gangtok-01</td><td class="mono">10.115.1.1</td><td>16</td><td>312</td><td><span class="tag tag-green">Online</span></td></tr>
+            <tr><td>OLT-Gangtok-02</td><td class="mono">10.115.2.1</td><td>16</td><td>219</td><td><span class="tag tag-green">Online</span></td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+      <div class="page" id="page-onus">
+        <div class="page-head"><div><h1>ONUs</h1><div class="crumb">Monitoring / ONUs</div></div></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>ONU ID</th><th>Subscriber</th><th>Signal (dBm)</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">ONU-3391</td><td>shekhar@its</td><td>-19.2</td><td><span class="tag tag-green">Good</span></td></tr>
+            <tr><td class="mono">ONU-3388</td><td>lyric231</td><td>-27.8</td><td><span class="tag tag-amber">Weak</span></td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+      <div class="page" id="page-nas"><div class="page-head"><div><h1>NAS</h1><div class="crumb">Networking / NAS</div></div></div><div class="panel panel-body empty"><div class="ic">🖧</div>NAS devices yahan list honge — API se sync hoga.</div></div>
+      <div class="page" id="page-ipv4"><div class="page-head"><div><h1>IPv4 Pool</h1></div></div><div class="panel panel-body empty"><div class="ic">🌐</div>IPv4 pool management.</div></div>
+      <div class="page" id="page-ipv6"><div class="page-head"><div><h1>IPv6 Pool</h1></div></div><div class="panel panel-body empty"><div class="ic">🌐</div>IPv6 pool management.</div></div>
+
+      <!-- ===================== REPORTS ===================== -->
+      <div class="page" id="page-usage">
+        <div class="page-head"><div><h1>Data Usage Report</h1><div class="crumb">Har client ka daily / weekly / monthly usage</div></div><button class="btn btn-sm">⬇ Export CSV</button></div>
+        <div class="panel">
+          <div class="panel-head"><h3>Usage Trend</h3>
+            <div class="pill-row"><span class="pill active" onclick="setUsageRange(this,'daily')">Daily</span><span class="pill" onclick="setUsageRange(this,'weekly')">Weekly</span><span class="pill" onclick="setUsageRange(this,'monthly')">Monthly</span></div>
+          </div>
+          <div class="panel-body"><canvas id="usageChart" height="110"></canvas></div>
+        </div>
+        <div class="panel" style="margin-top:14px;"><div class="table-wrap"><table>
+          <thead><tr><th>Username</th><th>Today</th><th>This Week</th><th>This Month</th></tr></thead>
+          <tbody>
+            <tr><td class="cell-strong">watercommission</td><td>645 MB</td><td>3.9 GB</td><td>18.2 GB</td></tr>
+            <tr><td class="cell-strong">abhishekgupta@its</td><td>14.5 MB</td><td>410 MB</td><td>2.1 GB</td></tr>
+            <tr><td class="cell-strong">bidhya@its</td><td>91.7 MB</td><td>1.2 GB</td><td>6.4 GB</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <div class="page" id="page-activitylog">
+        <div class="page-head"><div><h1>Client Activity Log</h1><div class="crumb">Monthly full record — kabhi bhi kisi ko dikhane ya problem solve karne ke liye</div></div><button class="btn btn-sm">⬇ Export</button></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Status</th><th>Site</th><th>Username</th><th>Message</th><th>By</th><th>Time</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag tag-green">Accept</span></td><td>Default-Site</td><td>Charan@fibernet.ftth</td><td>Advance Package recharged successfully</td><td>pranit14@gmail.com</td><td>18 Aug 11:2x</td></tr>
+            <tr><td><span class="tag tag-green">Accept</span></td><td>Default-Site</td><td>watercommission</td><td>Advance recharge activated successfully</td><td>System</td><td>18 Aug 11:1x</td></tr>
+            <tr><td><span class="tag tag-green">Accept</span></td><td>itsgangtok</td><td>cs_nhidcl</td><td>Advance Package recharged successfully</td><td>pritam@gmail.com</td><td>18 Aug 11:0x</td></tr>
+            <tr><td><span class="tag tag-green">Accept</span></td><td>Default-Site</td><td>roman@its</td><td>Package recharged successfully — Invoice ITS/GTK/2026/1489</td><td>Subscriber Self</td><td>18 Aug 10:5x</td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <div class="page" id="page-renewals">
+        <div class="page-head"><div><h1>Upcoming Renewals</h1></div></div>
+        <div class="panel"><div class="table-wrap"><table>
+          <thead><tr><th>Username</th><th>Package</th><th>Expiry</th><th>Auto-renew</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>rajesh@its</td><td>upto_100Mbps_1Month</td><td>19 Aug 2026</td><td>✅ On</td><td><button class="btn btn-sm">Send Reminder</button></td></tr>
+            <tr><td>abhishekgupta@its</td><td>upto_100Mbps_1Month</td><td>20 Aug 2026</td><td>❌ Off</td><td><button class="btn btn-sm">Send Reminder</button></td></tr>
+          </tbody>
+        </table></div></div>
+      </div>
+
+      <!-- ===================== API INTEGRATIONS ===================== -->
+      <div class="page" id="page-apiconfig">
+        <div class="page-head"><div><h1>API Integrations</h1><div class="crumb">Yahan apni koi bhi API daal sakte ho — jagah ready hai</div></div><button class="btn btn-primary" onclick="openModal('addApi')">+ Add Custom API</button></div>
+        <div class="grid grid-2">
+          <div class="api-card"><div class="h"><div class="ic" style="background:#00D9C0;">💳</div><div class="name">Payment Gateway API</div><span class="status tag-gray" style="margin-left:auto;">Config →</span></div>
+            <div class="hint" style="margin-bottom:10px;">Razorpay / PhonePe / Cashfree — auto-stop/start service isi se link hai.</div>
+            <button class="btn btn-sm" onclick="go('gateway')">Open Settings</button></div>
+
+          <div class="api-card"><div class="h"><div class="ic" style="background:#8B7CF6;">💬</div><div class="name">SMS / WhatsApp API</div><span class="status tag-gray" style="margin-left:auto;">Empty</span></div>
+            <div class="field"><label>API Key</label><input type="text" placeholder="Apni SMS/WhatsApp API key yahan daalein"></div>
+            <div class="field"><label>Sender ID</label><input type="text" placeholder="e.g. NETPLS"></div>
+            <button class="btn btn-cyan btn-sm">Save</button></div>
+
+          <div class="api-card"><div class="h"><div class="ic" style="background:#FFB648;">📡</div><div class="name">NAS / RADIUS API</div><span class="status tag-gray" style="margin-left:auto;">Empty</span></div>
+            <div class="field"><label>RADIUS Server URL</label><input type="text" placeholder="radius://your-server:1812"></div>
+            <div class="field"><label>Shared Secret</label><input type="password" placeholder="●●●●●●●●●●●●"></div>
+            <button class="btn btn-cyan btn-sm">Save</button></div>
+
+          <div class="api-card"><div class="h"><div class="ic" style="background:#FF6B6B;">➕</div><div class="name">Custom / Future API</div><span class="status tag-gray" style="margin-left:auto;">Empty slot</span></div>
+            <div class="field"><label>Endpoint URL</label><input type="text" placeholder="https://api.example.com/v1/..."></div>
+            <div class="field"><label>API Key / Token</label><input type="password" placeholder="●●●●●●●●●●●●"></div>
+            <button class="btn btn-cyan btn-sm">Save</button></div>
+        </div>
+      </div>
+
+      <!-- ===================== ROLES & EMPLOYEES ===================== -->
+      <div class="page" id="page-roles">
+        <div class="page-head"><div><h1>Roles &amp; Employee Access</h1><div class="crumb">Employee ko yahan se role/permission do</div></div><button class="btn btn-primary" onclick="openModal('addEmp')">+ Add Employee</button></div>
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-head"><h3>Employees</h3></div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="cell-strong">Pranit</td><td>pranit14@gmail.com</td><td><span class="tag tag-violet">Reseller Admin</span></td><td><span class="tag tag-green">Active</span></td><td><button class="btn btn-sm">Edit</button></td></tr>
+                <tr><td class="cell-strong">Pritam</td><td>pritam@gmail.com</td><td><span class="tag tag-blue">Support Staff</span></td><td><span class="tag tag-green">Active</span></td><td><button class="btn btn-sm">Edit</button></td></tr>
+                <tr><td class="cell-strong">Roman</td><td>roman@its.in</td><td><span class="tag tag-amber">Billing Only</span></td><td><span class="tag tag-gray">Suspended</span></td><td><button class="btn btn-sm">Edit</button></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Permission Matrix (example role)</h3></div>
+            <div class="panel-body">
+              <div class="checkitem"><div class="toggle on"></div> Subscriber add / renew / upgrade</div>
+              <div class="checkitem"><div class="toggle on"></div> View data usage reports</div>
+              <div class="checkitem"><div class="toggle"></div> Access Finance &amp; Payment Gateway settings</div>
+              <div class="checkitem"><div class="toggle"></div> Manage API integrations</div>
+              <div class="checkitem"><div class="toggle on"></div> Send quotation to client</div>
+              <div class="checkitem"><div class="toggle"></div> Add / remove other employees</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== CLIENT SELF-SERVICE PORTAL PREVIEW ===================== -->
+      <div class="page" id="page-portal">
+        <div class="page-head"><div><h1>Client Self-Service Portal</h1><div class="crumb">Client seedha yahan se plan le / renew kare — koi office aane ki zaroorat nahi</div></div></div>
+        <div class="portal-wrap">
+          <div class="portal-phone">
+            <div class="ph-head">📶 My WiFi Account</div>
+            <div class="plan-card">
+              <div class="p-top"><span>100 Mbps Plan</span><span class="tag tag-amber">Expiring in 1 day</span></div>
+              <div class="p-speed">Valid till 19 Aug 2026 · 1 TB FUP</div>
+              <div class="progress" style="margin-top:8px;"><div style="width:92%"></div></div>
+            </div>
+            <button class="btn btn-cyan" style="width:100%;justify-content:center;margin-bottom:8px;">💳 Renew Now — ₹944</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-bottom:8px;">⬆ Upgrade Plan</button>
+            <button class="btn btn-ghost" style="width:100%;justify-content:center;">📄 Request Quotation</button>
+          </div>
+          <p style="text-align:center;color:#AEB8D6;font-size:12px;margin-top:16px;">Payment success hote hi service automatic start ho jayegi — koi manual kaam nahi.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<div class="modal-bg" id="modal-addSub">
+  <div class="modal">
+    <div class="modal-head"><h3>New Subscriber</h3><button class="x-btn" onclick="closeModal('addSub')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Username</label><input type="text" placeholder="e.g. rajesh@its"></div>
+      <div class="field"><label>Package / Speed</label><select><option>100 Mbps — 1 Month — ₹944</option><option>60 Mbps — 1 Month — ₹1,180</option><option>50 Mbps — 1 Month — ₹1,888</option></select></div>
+      <div class="field"><label>Site</label><select><option>Default-Site</option><option>itsgangtok</option></select></div>
+      <div class="field"><label>Mobile Number</label><input type="text" placeholder="98xxxxxxx1"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('addSub')">Cancel</button><button class="btn btn-primary" onclick="toast('Subscriber add ho gaya ✅');closeModal('addSub')">Add Subscriber</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addPkg">
+  <div class="modal">
+    <div class="modal-head"><h3>Add Package</h3><button class="x-btn" onclick="closeModal('addPkg')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Package Name</label><input type="text" placeholder="e.g. 100 Mbps Unlimited"></div>
+      <div class="grid grid-2">
+        <div class="field"><label>Speed (Mbps)</label><input type="number" placeholder="100"></div>
+        <div class="field"><label>Data Limit</label><input type="text" placeholder="1 TB / Unlimited"></div>
+      </div>
+      <div class="grid grid-2">
+        <div class="field"><label>Price (₹)</label><input type="number" placeholder="944"></div>
+        <div class="field"><label>Validity</label><select><option>1 Month</option><option>3 Months</option><option>30 Days</option></select></div>
+      </div>
+      <div class="field"><label>Offer / Discount (optional)</label><input type="text" placeholder="e.g. 10% off first month"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('addPkg')">Cancel</button><button class="btn btn-primary" onclick="toast('Package create ho gaya ✅');closeModal('addPkg')">Save Package</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-quote">
+  <div class="modal">
+    <div class="modal-head"><h3>New Quotation</h3><button class="x-btn" onclick="closeModal('quote')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Client Name</label><input type="text" placeholder="Client ka naam"></div>
+      <div class="field"><label>Phone</label><input type="text" placeholder="Mobile number"></div>
+      <div class="field"><label>Plan</label><select><option>100 Mbps — ₹944/mo</option><option>60 Mbps — ₹1,180/mo</option></select></div>
+      <div class="field"><label>Notes</label><textarea rows="3" placeholder="Koi special offer ya note"></textarea></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('quote')">Cancel</button><button class="btn btn-primary" onclick="toast('Quotation client ko bhej diya ✅');closeModal('quote')">Send Quotation</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addApi">
+  <div class="modal">
+    <div class="modal-head"><h3>Add Custom API</h3><button class="x-btn" onclick="closeModal('addApi')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Service Name</label><input type="text" placeholder="e.g. My Custom Billing API"></div>
+      <div class="field"><label>Endpoint URL</label><input type="text" placeholder="https://..."></div>
+      <div class="field"><label>API Key</label><input type="password" placeholder="●●●●●●●●●●"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('addApi')">Cancel</button><button class="btn btn-primary" onclick="toast('API slot save ho gaya ✅');closeModal('addApi')">Save</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-addEmp">
+  <div class="modal">
+    <div class="modal-head"><h3>Add Employee</h3><button class="x-btn" onclick="closeModal('addEmp')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Name</label><input type="text"></div>
+      <div class="field"><label>Email</label><input type="email"></div>
+      <div class="field"><label>Role</label><select><option>Reseller Admin</option><option>Support Staff</option><option>Billing Only</option><option>Custom Role</option></select></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('addEmp')">Cancel</button><button class="btn btn-primary" onclick="toast('Employee add ho gaya ✅');closeModal('addEmp')">Add</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-subAction">
+  <div class="modal">
+    <div class="modal-head"><h3 id="subActionTitle">Manage Subscriber</h3><button class="x-btn" onclick="closeModal('subAction')">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Change Package / Speed</label>
+        <select><option>100 Mbps — 1TB — ₹944</option><option>60 Mbps — Unlimited — ₹1,180</option><option>40 Mbps — Unlimited — ₹590</option><option>20 Mbps — Unlimited — ₹590</option></select>
+      </div>
+      <div class="field"><label>Custom Speed Override (Mbps)</label><input type="number" placeholder="e.g. 75"></div>
+      <div class="field"><label>Apply Offer</label><input type="text" placeholder="e.g. 1 month free, 15% off"></div>
+      <div class="field" style="display:flex;align-items:center;gap:10px;"><div class="toggle on" onclick="this.classList.toggle('on')"></div><label style="margin:0;">Service Active</label></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('subAction')">Cancel</button><button class="btn btn-primary" onclick="toast('Subscriber update ho gaya ✅');closeModal('subAction')">Save Changes</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Saved</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
