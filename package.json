@@ -1,0 +1,12 @@
+{
+  "name": "netpulse-isp-crm",
+  "version": "1.0.0",
+  "description": "NetPulse - WiFi/ISP CRM dashboard (frontend). Subscriber management, billing, reports, roles and API integration slots.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
